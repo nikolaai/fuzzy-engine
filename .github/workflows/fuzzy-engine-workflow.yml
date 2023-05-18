@@ -57,11 +57,4 @@ jobs:
           # format: 'sarif'
           # output: 'trivy-results.sarif'
 
-      # - name: Upload Trivy scan results to GitHub Security tab
-      #   uses: github/codeql-action/upload-sarif@v2
-      #   with:
-      #     sarif_file: 'trivy-results.sarif'
-      # #     checkout_path: /home/runner/work/fuzzy-engine/fuzzy-engine
-      # #     token: ${{ secrets.GITHUB_TOKEN }}
-      # #     branches: ${{ github.ref }}
       
