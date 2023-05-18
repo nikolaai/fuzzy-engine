@@ -1,0 +1,67 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [ closed ]
+    branches:
+      - main
+
+env:
+  GHCR_USERNAME: nikolaai
+  GHCR_REPOSITORY: fuzzy-engine
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: main
+      
+      - name: Set Docker image tag
+        run: |
+          TAG=$(date +%y%m%d.%H%M%S)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/$GHCR_USERNAME/$GHCR_REPOSITORY:${{ env.TAG }} -t ghcr.io/$GHCR_USERNAME/$GHCR_REPOSITORY:latest --progress=plain .
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image to GitHub Container Registry
+        run: |
+          IMAGE_TAG="ghcr.io/$GHCR_USERNAME/$GHCR_REPOSITORY:${{ env.TAG }}"
+          docker push $IMAGE_TAG
+          docker push ghcr.io/$GHCR_USERNAME/$GHCR_REPOSITORY:latest
+
+      - name: Scan Docker image with trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/nikolaai/fuzzy-engine-workflow:${{ env.TAG }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          # format: 'sarif'
+          # output: 'trivy-results.sarif'
+
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v2
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'
+      # #     checkout_path: /home/runner/work/fuzzy-engine/fuzzy-engine
+      # #     token: ${{ secrets.GITHUB_TOKEN }}
+      # #     branches: ${{ github.ref }}
+      
