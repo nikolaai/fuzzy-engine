@@ -48,7 +48,7 @@ jobs:
       - name: Scan Docker image with trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/nikolaai/fuzzy-engine-workflow:${{ env.TAG }}
+          image-ref: ghcr.io/nikolaai/fuzzy-engine:${{ env.TAG }}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
